@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>티스토리 마크다운 포스팅 & 이미지 정렬 도구</title>
+  <!-- Marked.js (Markdown Parser) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Highlight.js (Code Highlighting) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #eb5344;
+      --bg: #f8f9fa;
+      --border: #e2e8f0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: var(--bg);
+      color: #333;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 20px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+    
+    /* 1. 이미지 드래그 앤 드롭 영역 스타일 */
+    .image-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      min-height: 120px;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafafa;
+    }
+    .image-card {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+      cursor: grab;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .image-card:active { cursor: grabbing; }
+    .image-card.dragging {
+      opacity: 0.4;
+      border: 2px dashed var(--primary);
+    }
+    .image-card img {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+    }
+    .image-card .order-badge {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .image-card .filename {
+      font-size: 0.7rem;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 90%;
+      padding-top: 4px;
+    }
+
+    /* 3. 티스토리 마크다운 미리보기 스타일 (테이블, 코드블록) */
+    .preview-container {
+      margin-top: 24px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+    }
+    /* 티스토리 맞춤형 테이블 스타일 */
+    .preview-container table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .preview-container th, .preview-container td {
+      border: 1px solid #e2e8f0;
+      padding: 10px 14px;
+      text-align: left;
+    }
+    .preview-container th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+    }
+    /* 코드 블록 스타일 */
+    .preview-container pre {
+      border-radius: 6px;
+      overflow-x: auto;
+      padding: 0;
+    }
+    .preview-container code {
+      font-family: Consolas, Monaco, "Courier New", monospace;
+    }
+    
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:hover { background: #d94132; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>티스토리 포스팅 & 이미지 매니저</h1>
+
+  <!-- 2. LocalStorage Caching: Blog ID -->
+  <div class="form-group">
+    <label for="blogId">티스토리 Blog Name (ID)</label>
+    <input type="text" id="blogId" placeholder="예: my-tech-blog (자동 저장됩니다)">
+  </div>
+
+  <!-- 1. Drag-and-Drop Image Sortable List -->
+  <div class="form-group">
+    <label>업로드할 이미지 (선택 후 마우스로 끌어서 순서를 변경하세요)</label>
+    <input type="file" id="imageInput" multiple accept="image/*" style="margin-bottom: 10px;">
+    <div id="imageList" class="image-list"></div>
+  </div>
+
+  <!-- 3. Specialized Markdown Text Area -->
+  <div class="form-group">
+    <label for="mdInput">마크다운 본문 (테이블, 코드 블록 지원)</label>
+    <textarea id="mdInput" rows="10" placeholder="# 제목을 입력하세요...&#10;&#10;```javascript&#10;console.log('Tistory!');&#10;```&#10;&#10;| 항목 | 내용 |&#10;| --- | --- |&#10;| 버전 | v1.0 |"></textarea>
+  </div>
+
+  <button class="btn" id="renderBtn">미리보기 및 변환</button>
+
+  <div class="preview-container">
+    <h3>티스토리 렌더링 미리보기</h3>
+    <div id="previewArea">마크다운을 입력하면 실시간으로 변환됩니다.</div>
+  </div>
+</div>
+
+<script>
+  // ----------------------------------------------------
+  // 1. LocalStorage Blog ID 캐싱
+  // ----------------------------------------------------
+  const blogIdInput = document.getElementById('blogId');
+  const STORAGE_KEY = 'tistory_blog_id';
+
+  // 로드 시 캐시된 값 불러오기
+  const savedBlogId = localStorage.getItem(STORAGE_KEY);
+  if (savedBlogId) {
+    blogIdInput.value = savedBlogId;
+  }
+
+  // 입력 시 실시간 저장
+  blogIdInput.addEventListener('input', (e) => {
+    localStorage.setItem(STORAGE_KEY, e.target.value.trim());
+  });
+
+  // ----------------------------------------------------
+  // 2. Drag & Drop 이미지 정렬 관리
+  // ----------------------------------------------------
+  let uploadedImages = []; // { id, file, url }
+  const imageInput = document.getElementById('imageInput');
+  const imageList = document.getElementById('imageList');
+
+  imageInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach((file) => {
+      uploadedImages.push({
+        id: 'img_' + Math.random().toString(36).substr(2, 9),
+        file: file,
+        url: URL.createObjectURL(file),
+        name: file.name
+      });
+    });
+    renderImageList();
+  });
+
+  function renderImageList() {
+    imageList.innerHTML = '';
+    uploadedImages.forEach((item, index) => {
+      const card = document.createElement('div');
+      card.className = 'image-card';
+      card.draggable = true;
+      card.dataset.index = index;
+
+      card.innerHTML = `
+        <span class="order-badge">${index + 1}</span>
+        <img src="${item.url}" alt="${item.name}">
+        <div class="filename" title="${item.name}">${item.name}</div>
+      `;
+
+      // Drag 이벤트 리스너 등록
+      card.addEventListener('dragstart', handleDragStart);
+      card.addEventListener('dragover', handleDragOver);
+      card.addEventListener('drop', handleDrop);
+      card.addEventListener('dragend', handleDragEnd);
+
+      imageList.appendChild(card);
+    });
+  }
+
+  let draggedIndex = null;
+
+  function handleDragStart(e) {
+    draggedIndex = Number(this.dataset.index);
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    const targetIndex = Number(this.dataset.index);
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    // 순서 변경
+    const movedItem = uploadedImages.splice(draggedIndex, 1)[0];
+    uploadedImages.splice(targetIndex, 0, movedItem);
+    
+    renderImageList();
+  }
+
+  function handleDragEnd() {
+    this.classList.remove('dragging');
+    draggedIndex = null;
+  }
+
+  // ----------------------------------------------------
+  // 3. 티스토리 마크다운 파서 및 하이라이팅 설정
+  // ----------------------------------------------------
+  marked.setOptions({
+    highlight: function(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+      return hljs.highlight(code, { language }).value;
+    },
+    gfm: true, // GitHub Flavored Markdown (테이블 활성화)
+    breaks: true
+  });
+
+  const mdInput = document.getElementById('mdInput');
+  const previewArea = document.getElementById('previewArea');
+  const renderBtn = document.getElementById('renderBtn');
+
+  function updatePreview() {
+    const rawMarkdown = mdInput.value;
+    // 마크다운 파싱 및 티스토리 프리뷰 출력
+    previewArea.innerHTML = marked.parse(rawMarkdown);
+  }
+
+  renderBtn.addEventListener('click', updatePreview);
+  mdInput.addEventListener('input', updatePreview);
+</script>
+
+</body>
+</html>
