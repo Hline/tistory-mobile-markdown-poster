@@ -2,8 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>티스토리 마크다운 포스팅 & 이미지 정렬 도구</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>티스토리 모바일 마크다운 포스터</title>
+  
   <!-- Marked.js (Markdown Parser) -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <!-- Highlight.js (Code Highlighting) -->
@@ -13,193 +14,547 @@
   <style>
     :root {
       --primary: #eb5344;
-      --bg: #f8f9fa;
+      --primary-hover: #d44032;
+      --primary-light: #fef2f0;
+      --bg: #f5f6f8;
+      --card-bg: #ffffff;
+      --text-main: #2d3748;
+      --text-muted: #718096;
       --border: #e2e8f0;
+      --success: #10b981;
+      --radius: 10px;
     }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       margin: 0;
-      padding: 24px;
+      padding: 16px 16px 90px 16px;
       background-color: var(--bg);
-      color: #333;
+      color: var(--text-main);
+      line-height: 1.5;
     }
+
     .container {
-      max-width: 1000px;
+      max-width: 900px;
       margin: 0 auto;
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
-    h1 { font-size: 1.5rem; margin-bottom: 20px; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+
+    /* Header */
+    .app-header {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      margin-bottom: 16px;
+    }
+    .app-header h1 {
+      font-size: 1.35rem;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .app-header p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Card Box */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
     input[type="text"], textarea {
       width: 100%;
-      padding: 10px 12px;
+      padding: 11px 14px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      box-sizing: border-box;
+      border-radius: 8px;
       font-size: 0.95rem;
+      background-color: #fafbfc;
+      transition: border-color 0.2s, background-color 0.2s;
+      font-family: inherit;
     }
-    
-    /* 1. 이미지 드래그 앤 드롭 영역 스타일 */
-    .image-list {
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: #ffffff;
+    }
+
+    /* Blog ID & Quick Launch */
+    .blog-input-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      min-height: 120px;
-      border: 2px dashed var(--border);
+      gap: 8px;
+    }
+    .blog-input-row input {
+      flex: 1;
+    }
+
+    /* Mobile Markdown Toolbar */
+    .md-toolbar {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 6px 2px 10px 2px;
+      margin-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .md-toolbar::-webkit-scrollbar {
+      height: 4px;
+    }
+    .md-toolbar::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    .tool-btn {
+      flex-shrink: 0;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .tool-btn:active {
+      background: #e2e8f0;
+    }
+
+    /* Textarea */
+    #mdInput {
+      min-height: 180px;
+      resize: vertical;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* Image List & Cards */
+    .image-dropzone {
+      border: 2px dashed #cbd5e1;
       border-radius: 8px;
       padding: 12px;
-      background: #fafafa;
+      background: #f8fafc;
+      min-height: 90px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .empty-image-msg {
+      width: 100%;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 16px 0;
     }
     .image-card {
       position: relative;
-      width: 110px;
-      height: 110px;
+      width: 95px;
+      height: 105px;
       border-radius: 8px;
       overflow: hidden;
-      border: 1px solid #ddd;
-      cursor: grab;
+      border: 1px solid #e2e8f0;
       background: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .image-card:active { cursor: grabbing; }
-    .image-card.dragging {
-      opacity: 0.4;
-      border: 2px dashed var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     .image-card img {
       width: 100%;
-      height: 80px;
+      height: 65px;
       object-fit: cover;
     }
     .image-card .order-badge {
       position: absolute;
       top: 4px;
       left: 4px;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.65);
       color: #fff;
-      font-size: 0.75rem;
-      padding: 2px 6px;
+      font-size: 0.7rem;
+      padding: 1px 5px;
       border-radius: 4px;
+      font-weight: bold;
+    }
+    .image-card-controls {
+      display: flex;
+      width: 100%;
+      height: 22px;
+      background: #f1f5f9;
+      border-top: 1px solid #e2e8f0;
+    }
+    .img-ctrl-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 0.7rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      padding: 0;
+    }
+    .img-ctrl-btn:active {
+      background: #e2e8f0;
+    }
+    .img-ctrl-btn.delete {
+      color: #ef4444;
     }
     .image-card .filename {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       text-align: center;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       width: 90%;
-      padding-top: 4px;
+      padding: 2px 0;
+      color: #64748b;
     }
 
-    /* 3. 티스토리 마크다운 미리보기 스타일 (테이블, 코드블록) */
-    .preview-container {
-      margin-top: 24px;
-      padding: 20px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-    }
-    /* 티스토리 맞춤형 테이블 스타일 */
-    .preview-container table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 16px 0;
-    }
-    .preview-container th, .preview-container td {
-      border: 1px solid #e2e8f0;
-      padding: 10px 14px;
-      text-align: left;
-    }
-    .preview-container th {
-      background-color: #f1f5f9;
-      font-weight: 600;
-    }
-    /* 코드 블록 스타일 */
-    .preview-container pre {
-      border-radius: 6px;
-      overflow-x: auto;
-      padding: 0;
-    }
-    .preview-container code {
-      font-family: Consolas, Monaco, "Courier New", monospace;
-    }
-    
+    /* Buttons */
     .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       background: var(--primary);
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
+      padding: 11px 18px;
+      border-radius: 8px;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.15s, transform 0.05s;
+      text-decoration: none;
     }
-    .btn:hover { background: #d94132; }
+    .btn:hover {
+      background: var(--primary-hover);
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-secondary {
+      background: #4a5568;
+    }
+    .btn-secondary:hover {
+      background: #2d3748;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+    }
+    .btn-outline:hover {
+      background: #edf2f7;
+    }
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Preview Container */
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .preview-body {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+      min-height: 120px;
+      word-break: break-word;
+      line-height: 1.7;
+    }
+
+    /* Preview inner elements default preview style */
+    .preview-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 0.9rem;
+    }
+    .preview-body th, .preview-body td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 12px;
+    }
+    .preview-body th {
+      background: #f8fafc;
+      font-weight: 600;
+    }
+    .preview-body pre {
+      border-radius: 8px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      margin: 14px 0;
+    }
+    .preview-body code {
+      font-family: Consolas, Monaco, "Courier New", monospace;
+    }
+    .preview-body blockquote {
+      margin: 14px 0;
+      padding: 8px 14px;
+      border-left: 4px solid var(--primary);
+      background: #fafafa;
+      color: #555;
+    }
+
+    /* Mobile Sticky Bottom Action Bar */
+    .sticky-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+      box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+    }
+    .sticky-bar .btn-main {
+      flex: 2;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(235, 83, 68, 0.3);
+    }
+    .sticky-bar .btn-sub {
+      flex: 1;
+      padding: 14px;
+      font-size: 0.9rem;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #1e293b;
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      font-size: 0.9rem;
+      font-weight: 600;
+      z-index: 999;
+      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      max-width: 90%;
+      text-align: center;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast .sub-text {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: normal;
+      margin-top: 4px;
+    }
+
+    /* Notice Box */
+    .notice-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      color: #166534;
+      line-height: 1.5;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding: 24px 24px 100px 24px;
+      }
+      .app-header h1 {
+        font-size: 1.6rem;
+      }
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>티스토리 포스팅 & 이미지 매니저</h1>
 
-  <!-- 2. LocalStorage Caching: Blog ID -->
-  <div class="form-group">
-    <label for="blogId">티스토리 Blog Name (ID)</label>
-    <input type="text" id="blogId" placeholder="예: my-tech-blog (자동 저장됩니다)">
+  <!-- Header -->
+  <header class="app-header">
+    <h1>📝 티스토리 모바일 마크다운 포스터</h1>
+    <p>모바일에서도 HTML 모드 없이 <strong>표, 코드 구문 강조, 서식</strong>을 붙여넣기 한 번으로 완벽하게 적용합니다.</p>
+  </header>
+
+  <!-- Usage Tip Banner -->
+  <div class="notice-box">
+    💡 <strong>모바일 사용 팁:</strong> 아래에서 마크다운 작성 후 하단의 <strong>[📋 모바일 서식 복사]</strong> 버튼을 누르면 인라인 스타일이 적용된 상태로 복사됩니다. 티스토리 에디터에서 바로 <strong>붙여넣기</strong>하세요!
   </div>
 
-  <!-- 1. Drag-and-Drop Image Sortable List -->
-  <div class="form-group">
-    <label>업로드할 이미지 (선택 후 마우스로 끌어서 순서를 변경하세요)</label>
-    <input type="file" id="imageInput" multiple accept="image/*" style="margin-bottom: 10px;">
-    <div id="imageList" class="image-list"></div>
+  <!-- 1. Blog ID & Quick Launcher -->
+  <div class="card">
+    <div class="card-title">
+      <span>⚙️ 내 티스토리 블로그 설정</span>
+    </div>
+    <div class="form-group">
+      <label for="blogId">티스토리 Blog Name (ID)</label>
+      <div class="blog-input-row">
+        <input type="text" id="blogId" placeholder="예: my-tech-blog (자동 저장)">
+        <button class="btn btn-secondary btn-sm" id="openEditorBtn" type="button">🚀 글쓰기 열기</button>
+      </div>
+    </div>
   </div>
 
-  <!-- 3. Specialized Markdown Text Area -->
-  <div class="form-group">
-    <label for="mdInput">마크다운 본문 (테이블, 코드 블록 지원)</label>
-    <textarea id="mdInput" rows="10" placeholder="# 제목을 입력하세요...&#10;&#10;```javascript&#10;console.log('Tistory!');&#10;```&#10;&#10;| 항목 | 내용 |&#10;| --- | --- |&#10;| 버전 | v1.0 |"></textarea>
+  <!-- 2. Image Manager -->
+  <div class="card">
+    <div class="card-title">
+      <span>🖼️ 이미지 정렬 & 삽입 가이드</span>
+      <button class="btn btn-outline btn-sm" id="insertImgMdBtn" type="button">마크다운에 이미지 태그 삽입</button>
+    </div>
+    <div class="form-group">
+      <input type="file" id="imageInput" multiple accept="image/*" style="margin-bottom: 10px; font-size: 0.85rem; width: 100%;">
+      <div id="imageList" class="image-dropzone">
+        <div class="empty-image-msg" id="emptyMsg">선택된 이미지가 없습니다. 위 버튼을 눌러 사진을 추가하세요.</div>
+      </div>
+    </div>
   </div>
 
-  <button class="btn" id="renderBtn">미리보기 및 변환</button>
+  <!-- 3. Markdown Editor & Mobile Toolbar -->
+  <div class="card">
+    <div class="card-title">
+      <span>✍️ 마크다운 본문 작성</span>
+    </div>
 
-  <div class="preview-container">
-    <h3>티스토리 렌더링 미리보기</h3>
-    <div id="previewArea">마크다운을 입력하면 실시간으로 변환됩니다.</div>
+    <!-- Mobile Markdown Quick Toolbar -->
+    <div class="md-toolbar">
+      <button class="tool-btn" data-insert="# ">H1</button>
+      <button class="tool-btn" data-insert="## ">H2</button>
+      <button class="tool-btn" data-insert="### ">H3</button>
+      <button class="tool-btn" data-wrap="**">굵게</button>
+      <button class="tool-btn" data-wrap="*">기울임</button>
+      <button class="tool-btn" data-wrap="~~">취소선</button>
+      <button class="tool-btn" data-insert="```javascript&#10;console.log('Hello');&#10;```&#10;">코드블록</button>
+      <button class="tool-btn" data-insert="&#10;| 구분 | 항목 | 내용 |&#10;| :--- | :--- | :--- |&#10;| 1 | 제목 | 설명 |&#10;">표(Table)</button>
+      <button class="tool-btn" data-insert="> ">인용구</button>
+      <button class="tool-btn" data-insert="- ">목록(-)</button>
+      <button class="tool-btn" data-insert="1. ">번호목록</button>
+      <button class="tool-btn" data-insert="[링크제목](https://)">링크</button>
+      <button class="tool-btn" data-insert="---&#10;">구분선</button>
+    </div>
+
+    <div class="form-group">
+      <textarea id="mdInput" rows="10" placeholder="# 제목을 입력하세요...&#10;&#10;여기에 마크다운 내용을 입력하세요.&#10;&#10;```python&#10;def hello_tistory():&#10;    print('모바일에서도 서식 유지!')&#10;```&#10;&#10;| 기능 | 지원 여부 |&#10;| :--- | :---: |&#10;| 표 렌더링 | ✅ 완벽 지원 |&#10;| 코드 하이라이트 | ✅ Atom One Dark |"></textarea>
+    </div>
   </div>
+
+  <!-- 4. Preview Container -->
+  <div class="card">
+    <div class="preview-header">
+      <span class="card-title" style="margin: 0;">👁️ 티스토리 렌더링 미리보기</span>
+      <button class="btn btn-outline btn-sm" id="copyRawHtmlBtn" type="button">HTML 코드 복사</button>
+    </div>
+    <div id="previewArea" class="preview-body">
+      마크다운을 입력하면 실시간으로 미리보기가 생성됩니다.
+    </div>
+  </div>
+
+</div>
+
+<!-- Hidden container for clipboard operations -->
+<div id="clipboardContainer" style="position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none;"></div>
+
+<!-- Mobile Sticky Bottom Bar -->
+<div class="sticky-bar">
+  <button class="btn btn-main" id="copyRichBtn" type="button">
+    📋 모바일 서식 복사
+  </button>
+  <button class="btn btn-secondary btn-sub" id="stickyOpenEditorBtn" type="button">
+    🚀 글쓰기 이동
+  </button>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast">
+  <div id="toastTitle">✅ 서식이 복사되었습니다!</div>
+  <div class="sub-text" id="toastSub">티스토리 모바일 에디터에서 [붙여넣기]를 실행하세요.</div>
 </div>
 
 <script>
   // ----------------------------------------------------
-  // 1. LocalStorage Blog ID 캐싱
+  // 1. LocalStorage Blog ID 캐싱 & 글쓰기 페이지 이동
   // ----------------------------------------------------
   const blogIdInput = document.getElementById('blogId');
   const STORAGE_KEY = 'tistory_blog_id';
 
-  // 로드 시 캐시된 값 불러오기
   const savedBlogId = localStorage.getItem(STORAGE_KEY);
   if (savedBlogId) {
     blogIdInput.value = savedBlogId;
   }
 
-  // 입력 시 실시간 저장
   blogIdInput.addEventListener('input', (e) => {
     localStorage.setItem(STORAGE_KEY, e.target.value.trim());
   });
 
+  function openTistoryEditor() {
+    const blogId = blogIdInput.value.trim();
+    const url = blogId ? `https://${blogId}.tistory.com/manage/newpost/` : 'https://www.tistory.com/manage/newpost/';
+    window.open(url, '_blank');
+  }
+
+  document.getElementById('openEditorBtn').addEventListener('click', openTistoryEditor);
+  document.getElementById('stickyOpenEditorBtn').addEventListener('click', openTistoryEditor);
+
   // ----------------------------------------------------
-  // 2. Drag & Drop 이미지 정렬 관리
+  // 2. 모바일 친화적 이미지 관리 (순서 변경 / 삭제 / 태그 삽입)
   // ----------------------------------------------------
-  let uploadedImages = []; // { id, file, url }
+  let uploadedImages = []; // { id, file, url, name }
   const imageInput = document.getElementById('imageInput');
   const imageList = document.getElementById('imageList');
+  const emptyMsg = document.getElementById('emptyMsg');
 
   imageInput.addEventListener('change', (e) => {
     const files = Array.from(e.target.files);
@@ -212,86 +567,330 @@
       });
     });
     renderImageList();
+    imageInput.value = ''; // 초기화
   });
 
   function renderImageList() {
     imageList.innerHTML = '';
+    if (uploadedImages.length === 0) {
+      imageList.appendChild(emptyMsg);
+      emptyMsg.style.display = 'block';
+      return;
+    }
+
     uploadedImages.forEach((item, index) => {
       const card = document.createElement('div');
       card.className = 'image-card';
-      card.draggable = true;
-      card.dataset.index = index;
-
       card.innerHTML = `
         <span class="order-badge">${index + 1}</span>
         <img src="${item.url}" alt="${item.name}">
         <div class="filename" title="${item.name}">${item.name}</div>
+        <div class="image-card-controls">
+          <button class="img-ctrl-btn" onclick="moveImage(${index}, -1)" title="앞으로">◀</button>
+          <button class="img-ctrl-btn delete" onclick="deleteImage(${index})" title="삭제">✕</button>
+          <button class="img-ctrl-btn" onclick="moveImage(${index}, 1)" title="뒤로">▶</button>
+        </div>
       `;
-
-      // Drag 이벤트 리스너 등록
-      card.addEventListener('dragstart', handleDragStart);
-      card.addEventListener('dragover', handleDragOver);
-      card.addEventListener('drop', handleDrop);
-      card.addEventListener('dragend', handleDragEnd);
-
       imageList.appendChild(card);
     });
   }
 
-  let draggedIndex = null;
-
-  function handleDragStart(e) {
-    draggedIndex = Number(this.dataset.index);
-    this.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-  }
-
-  function handleDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }
-
-  function handleDrop(e) {
-    e.preventDefault();
-    const targetIndex = Number(this.dataset.index);
-    if (draggedIndex === null || draggedIndex === targetIndex) return;
-
-    // 순서 변경
-    const movedItem = uploadedImages.splice(draggedIndex, 1)[0];
-    uploadedImages.splice(targetIndex, 0, movedItem);
-    
+  window.moveImage = function(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= uploadedImages.length) return;
+    const moved = uploadedImages.splice(index, 1)[0];
+    uploadedImages.splice(targetIndex, 0, moved);
     renderImageList();
-  }
+  };
 
-  function handleDragEnd() {
-    this.classList.remove('dragging');
-    draggedIndex = null;
-  }
+  window.deleteImage = function(index) {
+    uploadedImages.splice(index, 1);
+    renderImageList();
+  };
+
+  // 마크다운에 이미지 플레이스홀더 태그 삽입
+  document.getElementById('insertImgMdBtn').addEventListener('click', () => {
+    if (uploadedImages.length === 0) {
+      showToast('⚠️ 이미지를 먼저 추가해주세요.', '상단 파일 선택 버튼으로 이미지를 추가할 수 있습니다.');
+      return;
+    }
+    let tags = '\n';
+    uploadedImages.forEach((img, idx) => {
+      tags += `\n<!-- [이미지 ${idx + 1}] ${img.name} 삽입 위치 -->\n![${img.name}](이미지_${idx + 1}_URL)\n`;
+    });
+    insertAtCursor(mdInput, tags);
+    updatePreview();
+    showToast('🖼️ 이미지 태그가 본문에 삽입되었습니다.', '마크다운 에디터를 확인하세요.');
+  });
 
   // ----------------------------------------------------
-  // 3. 티스토리 마크다운 파서 및 하이라이팅 설정
+  // 3. 마크다운 에디터 & 퀵 툴바
   // ----------------------------------------------------
+  const mdInput = document.getElementById('mdInput');
+  const previewArea = document.getElementById('previewArea');
+
   marked.setOptions({
     highlight: function(code, lang) {
       const language = hljs.getLanguage(lang) ? lang : 'plaintext';
       return hljs.highlight(code, { language }).value;
     },
-    gfm: true, // GitHub Flavored Markdown (테이블 활성화)
+    gfm: true,
     breaks: true
   });
 
-  const mdInput = document.getElementById('mdInput');
-  const previewArea = document.getElementById('previewArea');
-  const renderBtn = document.getElementById('renderBtn');
-
   function updatePreview() {
     const rawMarkdown = mdInput.value;
-    // 마크다운 파싱 및 티스토리 프리뷰 출력
     previewArea.innerHTML = marked.parse(rawMarkdown);
   }
 
-  renderBtn.addEventListener('click', updatePreview);
   mdInput.addEventListener('input', updatePreview);
+
+  // 퀵 툴바 기능
+  function insertAtCursor(myField, myValue) {
+    if (document.selection) {
+      myField.focus();
+      const sel = document.selection.createRange();
+      sel.text = myValue;
+    } else if (myField.selectionStart || myField.selectionStart === 0) {
+      const startPos = myField.selectionStart;
+      const endPos = myField.selectionEnd;
+      myField.value = myField.value.substring(0, startPos) + myValue + myField.value.substring(endPos, myField.value.length);
+      myField.selectionStart = startPos + myValue.length;
+      myField.selectionEnd = startPos + myValue.length;
+    } else {
+      myField.value += myValue;
+    }
+    myField.focus();
+  }
+
+  function wrapSelection(myField, wrapStr) {
+    const startPos = myField.selectionStart;
+    const endPos = myField.selectionEnd;
+    const selected = myField.value.substring(startPos, endPos) || '텍스트';
+    const replacement = wrapStr + selected + wrapStr;
+    myField.value = myField.value.substring(0, startPos) + replacement + myField.value.substring(endPos, myField.value.length);
+    myField.selectionStart = startPos + wrapStr.length;
+    myField.selectionEnd = startPos + wrapStr.length + selected.length;
+    myField.focus();
+  }
+
+  document.querySelectorAll('.md-toolbar .tool-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const insertText = btn.getAttribute('data-insert');
+      const wrapText = btn.getAttribute('data-wrap');
+      if (insertText) {
+        insertAtCursor(mdInput, insertText);
+      } else if (wrapText) {
+        wrapSelection(mdInput, wrapText);
+      }
+      updatePreview();
+    });
+  });
+
+  // ----------------------------------------------------
+  // 4. 모바일 티스토리 전용 CSS 인라인화 엔진 (핵심)
+  // ----------------------------------------------------
+  // Highlight.js Atom One Dark 테마 컬러 토큰 맵
+  const HLJS_STYLE_MAP = {
+    'hljs-keyword': 'color: #c678dd; font-weight: bold;',
+    'hljs-selector-tag': 'color: #c678dd; font-weight: bold;',
+    'hljs-subst': 'color: #c678dd; font-weight: bold;',
+    'hljs-string': 'color: #98c379;',
+    'hljs-title': 'color: #61afef;',
+    'hljs-section': 'color: #e06c75; font-weight: bold;',
+    'hljs-attribute': 'color: #98c379;',
+    'hljs-literal': 'color: #56b6c2;',
+    'hljs-template-tag': 'color: #98c379;',
+    'hljs-template-variable': 'color: #98c379;',
+    'hljs-type': 'color: #e5c07b;',
+    'hljs-addition': 'color: #98c379; background-color: #2e4438;',
+    'hljs-deletion': 'color: #e06c75; background-color: #4b2b2b;',
+    'hljs-comment': 'color: #5c6370; font-style: italic;',
+    'hljs-quote': 'color: #5c6370; font-style: italic;',
+    'hljs-number': 'color: #d19a66;',
+    'hljs-regexp': 'color: #98c379;',
+    'hljs-link': 'color: #61afef; text-decoration: underline;',
+    'hljs-built_in': 'color: #e6c07b;',
+    'hljs-symbol': 'color: #61afef;',
+    'hljs-bullet': 'color: #d19a66;',
+    'hljs-meta': 'color: #528bff;',
+    'hljs-tag': 'color: #e06c75;',
+    'hljs-name': 'color: #e06c75;',
+    'hljs-attr': 'color: #d19a66;',
+    'hljs-variable': 'color: #e06c75;',
+    'hljs-params': 'color: #abb2bf;'
+  };
+
+  function generateInlinedHtml(rawMarkdown) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = marked.parse(rawMarkdown);
+
+    // 1. Heading styles
+    tempDiv.querySelectorAll('h1').forEach(el => {
+      el.setAttribute('style', 'font-size: 22px; font-weight: 700; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin: 24px 0 12px 0;');
+    });
+    tempDiv.querySelectorAll('h2').forEach(el => {
+      el.setAttribute('style', 'font-size: 19px; font-weight: 700; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 20px 0 10px 0;');
+    });
+    tempDiv.querySelectorAll('h3').forEach(el => {
+      el.setAttribute('style', 'font-size: 16.5px; font-weight: 600; color: #334155; margin: 16px 0 8px 0;');
+    });
+
+    // 2. Paragraph & Text styles
+    tempDiv.querySelectorAll('p').forEach(el => {
+      el.setAttribute('style', 'font-size: 15px; line-height: 1.75; color: #333333; margin: 10px 0;');
+    });
+
+    // 3. Table styles (모바일 티스토리 맞춤)
+    tempDiv.querySelectorAll('table').forEach(el => {
+      el.setAttribute('style', 'width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; border: 1px solid #cbd5e1;');
+    });
+    tempDiv.querySelectorAll('th').forEach(el => {
+      el.setAttribute('style', 'background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 9px 12px; font-weight: 600; text-align: left; color: #1e293b;');
+    });
+    tempDiv.querySelectorAll('td').forEach(el => {
+      el.setAttribute('style', 'border: 1px solid #cbd5e1; padding: 9px 12px; color: #334155;');
+    });
+
+    // 4. Code Block & Syntax highlighting styles (Atom One Dark)
+    tempDiv.querySelectorAll('pre').forEach(el => {
+      el.setAttribute('style', 'background-color: #282c34; color: #abb2bf; padding: 14px 16px; border-radius: 8px; font-family: Consolas, Monaco, "Courier New", monospace; font-size: 13.5px; line-height: 1.6; overflow-x: auto; margin: 16px 0;');
+    });
+    tempDiv.querySelectorAll('pre code').forEach(el => {
+      el.setAttribute('style', 'font-family: inherit; font-size: inherit; background: transparent; color: inherit; padding: 0;');
+    });
+
+    // Inline `code` (pre 바깥의 인라인 코드)
+    tempDiv.querySelectorAll('code').forEach(el => {
+      if (el.parentElement.tagName !== 'PRE') {
+        el.setAttribute('style', 'background-color: #f1f5f9; color: #eb5344; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: Consolas, Monaco, monospace; font-weight: 600;');
+      }
+    });
+
+    // HLJS Syntax token class -> Inline styles
+    for (const [cls, style] of Object.entries(HLJS_STYLE_MAP)) {
+      tempDiv.querySelectorAll(`.${cls}`).forEach(el => {
+        const existing = el.getAttribute('style') || '';
+        el.setAttribute('style', `${existing} ${style}`.trim());
+      });
+    }
+
+    // 5. Blockquote styles
+    tempDiv.querySelectorAll('blockquote').forEach(el => {
+      el.setAttribute('style', 'margin: 16px 0; padding: 10px 16px; border-left: 4px solid #eb5344; background-color: #f8fafc; color: #475569; border-radius: 0 6px 6px 0; font-size: 14.5px;');
+    });
+
+    // 6. Lists
+    tempDiv.querySelectorAll('ul, ol').forEach(el => {
+      el.setAttribute('style', 'margin: 12px 0; padding-left: 24px; color: #333333; line-height: 1.7; font-size: 15px;');
+    });
+    tempDiv.querySelectorAll('li').forEach(el => {
+      el.setAttribute('style', 'margin: 4px 0;');
+    });
+
+    // 7. Divider & Links
+    tempDiv.querySelectorAll('hr').forEach(el => {
+      el.setAttribute('style', 'border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;');
+    });
+    tempDiv.querySelectorAll('a').forEach(el => {
+      el.setAttribute('style', 'color: #0969da; text-decoration: underline; font-weight: 500;');
+    });
+
+    return tempDiv.innerHTML;
+  }
+
+  // ----------------------------------------------------
+  // 5. 클립보드 복사 엔진 (리치 텍스트 & 순수 HTML)
+  // ----------------------------------------------------
+  async function copyRichTextToClipboard() {
+    const rawMarkdown = mdInput.value;
+    if (!rawMarkdown.trim()) {
+      showToast('⚠️ 마크다운 내용을 먼저 입력해주세요.', '');
+      return;
+    }
+
+    const inlinedHtml = generateInlinedHtml(rawMarkdown);
+
+    try {
+      // 1. 최신 navigator.clipboard API (text/html MIME 지원)
+      if (navigator.clipboard && window.ClipboardItem) {
+        const blobHtml = new Blob([inlinedHtml], { type: 'text/html' });
+        const blobText = new Blob([inlinedHtml], { type: 'text/plain' });
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': blobHtml,
+            'text/plain': blobText
+          })
+        ]);
+        showToast('📋 모바일 서식 복사 완료!', '티스토리 에디터에서 [붙여넣기]를 누르세요.');
+        return;
+      }
+    } catch (err) {
+      console.warn('ClipboardItem API 실패, Fallback 시도:', err);
+    }
+
+    // 2. 모바일 브라우저/구형 환경용 Selection Copy Fallback
+    try {
+      const container = document.getElementById('clipboardContainer');
+      container.innerHTML = inlinedHtml;
+      container.style.display = 'block';
+
+      const range = document.createRange();
+      range.selectNodeContents(container);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      const successful = document.execCommand('copy');
+      selection.removeAllRanges();
+      container.style.display = 'none';
+
+      if (successful) {
+        showToast('📋 모바일 서식 복사 완료!', '티스토리 에디터에서 [붙여넣기]를 누르세요.');
+      } else {
+        throw new Error('execCommand copy failed');
+      }
+    } catch (fallbackErr) {
+      console.error('클립보드 복사 실패:', fallbackErr);
+      showToast('❌ 복사에 실패했습니다.', '브라우저 권한을 확인해주세요.');
+    }
+  }
+
+  function copyRawHtml() {
+    const rawMarkdown = mdInput.value;
+    if (!rawMarkdown.trim()) {
+      showToast('⚠️ 마크다운 내용을 먼저 입력해주세요.', '');
+      return;
+    }
+    const inlinedHtml = generateInlinedHtml(rawMarkdown);
+    navigator.clipboard.writeText(inlinedHtml).then(() => {
+      showToast('📄 HTML 코드 복사 완료!', 'PC HTML 모드 전용 코드입니다.');
+    }).catch(() => {
+      showToast('❌ 복사 실패', '');
+    });
+  }
+
+  document.getElementById('copyRichBtn').addEventListener('click', copyRichTextToClipboard);
+  document.getElementById('copyRawHtmlBtn').addEventListener('click', copyRawHtml);
+
+  // ----------------------------------------------------
+  // 6. 모바일 Toast 알림 UI
+  // ----------------------------------------------------
+  let toastTimer = null;
+  function showToast(title, sub) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastTitle').textContent = title;
+    document.getElementById('toastSub').textContent = sub;
+
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3200);
+  }
+
+  // 초기 렌더링
+  updatePreview();
 </script>
 
 </body>
