@@ -370,7 +370,7 @@
     <label class="url-label" for="blogUrlInput">🔗 내 티스토리 블로그 주소 (입력 시 자동 저장)</label>
     <div class="url-input-row">
       <input type="text" id="blogUrlInput" class="url-input" placeholder="예: https://myblog.tistory.com 또는 myblog">
-      <button class="btn btn-secondary btn-sm" id="openAdminWriteBtn" type="button">🚀 글쓰기 열기</button>
+      <button class="btn btn-secondary btn-sm" id="openAdminWriteBtn" type="button">🖥️ 데스크탑 모드 글쓰기</button>
     </div>
   </div>
 
@@ -379,7 +379,7 @@
     <strong>💡 아이폰 / 모바일 작성 꿀팁:</strong>
     <ol class="ios-guide-steps">
       <li>하단의 <strong>[📋 서식 복사]</strong> 버튼을 터치하여 클립보드에 담습니다.</li>
-      <li><strong>[🚀 글쓰기 열기]</strong>를 눌러 관리자 페이지로 이동합니다.</li>
+      <li><strong>[🖥️ 데스크탑 모드 글쓰기]</strong>를 눌러 관리자 페이지로 이동합니다.</li>
       <li>사파리 주소창의 <strong>`가(AA)` 버튼 → [데스크탑 웹사이트 요청]</strong>을 누르면 PC와 동일한 웹 에디터가 열립니다.</li>
       <li>본문에 <strong>[붙여넣기]</strong>를 하면 표와 다크 테마 코드가 완벽하게 적용됩니다!</li>
     </ol>
@@ -389,6 +389,7 @@
   <div class="card">
     <div class="card-title">
       <span>✍️ 마크다운 본문 작성</span>
+      <button class="btn btn-outline btn-sm" id="clearTextBtn" type="button" style="color: #ef4444; border-color: #fca5a5;">🗑️ 본문 초기화</button>
     </div>
 
     <!-- Mobile Markdown Quick Toolbar -->
@@ -436,7 +437,7 @@
     📋 서식 복사
   </button>
   <button class="btn btn-secondary btn-sub" id="stickyOpenAdminBtn" type="button">
-    🚀 글쓰기 열기
+    🖥️ 데스크탑 모드 글쓰기
   </button>
 </div>
 
@@ -521,6 +522,19 @@
   }
 
   mdInput.addEventListener('input', updatePreview);
+
+  // 본문 한번에 초기화
+  document.getElementById('clearTextBtn').addEventListener('click', () => {
+    if (!mdInput.value.trim()) {
+      showToast('ℹ️ 이미 본문이 비어 있습니다.', '');
+      return;
+    }
+    if (confirm('본문 내용을 모두 지우시겠습니까?')) {
+      mdInput.value = '';
+      updatePreview();
+      showToast('🗑️ 본문이 초기화되었습니다.', '새로운 내용을 입력하세요.');
+    }
+  });
 
   // 퀵 툴바 문자열 삽입 / 감싸기
   function insertAtCursor(myField, myValue) {
