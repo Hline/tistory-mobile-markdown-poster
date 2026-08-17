@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>티스토리 모바일 마크다운 포스터</title>
   
   <!-- Marked.js (Markdown Parser) -->
@@ -811,47 +814,73 @@
 
     const inlinedHtml = generateInlinedHtml(rawMarkdown);
 
+    // 순수 텍스트 추출 (HTML 태그가 없는 본문 텍스트)
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = inlinedHtml;
+    const plainText = tempDiv.innerText || tempDiv.textContent || rawMarkdown;
+
+    let success = false;
+
+    // 방법 1: copy 이벤트 핸들러 + setData (모바일 사파리, 안드로이드 크롬/웹뷰에서 가장 안정적인 서식 복사)
     try {
-      // 1. 최신 navigator.clipboard API (text/html MIME 지원)
-      if (navigator.clipboard && window.ClipboardItem) {
+      const copyHandler = (e) => {
+        e.preventDefault();
+        e.clipboardData.setData('text/html', inlinedHtml);
+        e.clipboardData.setData('text/plain', plainText);
+      };
+      document.addEventListener('copy', copyHandler);
+      success = document.execCommand('copy');
+      document.removeEventListener('copy', copyHandler);
+    } catch (e) {
+      console.warn('copyHandler 실패:', e);
+    }
+
+    // 방법 2: Navigator Clipboard API (최신 표준 ClipboardItem)
+    if (!success && navigator.clipboard && window.ClipboardItem) {
+      try {
         const blobHtml = new Blob([inlinedHtml], { type: 'text/html' });
-        const blobText = new Blob([inlinedHtml], { type: 'text/plain' });
+        const blobText = new Blob([plainText], { type: 'text/plain' });
         await navigator.clipboard.write([
           new ClipboardItem({
             'text/html': blobHtml,
             'text/plain': blobText
           })
         ]);
-        showToast('📋 모바일 서식 복사 완료!', '티스토리 에디터에서 [붙여넣기]를 누르세요.');
-        return;
+        success = true;
+      } catch (err) {
+        console.warn('ClipboardItem API 실패, Fallback 시도:', err);
       }
-    } catch (err) {
-      console.warn('ClipboardItem API 실패, Fallback 시도:', err);
     }
 
-    // 2. 모바일 브라우저/구형 환경용 Selection Copy Fallback
-    try {
-      const container = document.getElementById('clipboardContainer');
-      container.innerHTML = inlinedHtml;
-      container.style.display = 'block';
+    // 방법 3: Selection Range Copy (구형 DOM 직접 선택 복사)
+    if (!success) {
+      try {
+        const container = document.getElementById('clipboardContainer');
+        container.innerHTML = inlinedHtml;
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.opacity = '0.01';
+        container.style.pointerEvents = 'none';
+        container.style.display = 'block';
 
-      const range = document.createRange();
-      range.selectNodeContents(container);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
+        const range = document.createRange();
+        range.selectNodeContents(container);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
 
-      const successful = document.execCommand('copy');
-      selection.removeAllRanges();
-      container.style.display = 'none';
-
-      if (successful) {
-        showToast('📋 모바일 서식 복사 완료!', '티스토리 에디터에서 [붙여넣기]를 누르세요.');
-      } else {
-        throw new Error('execCommand copy failed');
+        success = document.execCommand('copy');
+        selection.removeAllRanges();
+        container.style.display = 'none';
+      } catch (fallbackErr) {
+        console.error('Selection copy failed:', fallbackErr);
       }
-    } catch (fallbackErr) {
-      console.error('클립보드 복사 실패:', fallbackErr);
+    }
+
+    if (success) {
+      showToast('📋 서식 복사 완료!', '티스토리 에디터에서 [붙여넣기]를 실행하세요.');
+    } else {
       showToast('❌ 복사에 실패했습니다.', '브라우저 권한을 확인해주세요.');
     }
   }
