@@ -485,9 +485,41 @@
     return `https://${domain}/manage/newpost/`;
   }
 
+  // 데스크탑 모드 글쓰기 실행 (URL 검증 + 서식 자동 복사)
   function launchTistoryEditor() {
-    const targetUrl = buildAdminWriteUrl(blogUrlInput.value);
+    const inputVal = blogUrlInput.value.trim();
+    
+    // 1. 블로그 주소 검증
+    if (!inputVal) {
+      showToast('⚠️ 블로그 주소를 먼저 입력해주세요.', '상단 입력란에 블로그 주소(예: myblog)를 입력해 주세요.');
+      blogUrlInput.focus();
+      blogUrlInput.style.borderColor = '#ef4444';
+      blogUrlInput.style.backgroundColor = '#fff5f5';
+      setTimeout(() => {
+        blogUrlInput.style.borderColor = '';
+        blogUrlInput.style.backgroundColor = '';
+      }, 2500);
+      return;
+    }
+
+    const rawMarkdown = mdInput.value.trim();
+    
+    // 2. 본문 내용이 있는 경우 서식 자동 복사 동시 수행
+    let copySuccess = false;
+    if (rawMarkdown) {
+      copySuccess = executeRichCopy(rawMarkdown);
+    }
+
+    // 3. 관리자 글쓰기 새 탭 열기
+    const targetUrl = buildAdminWriteUrl(inputVal);
     window.open(targetUrl, '_blank');
+
+    // 4. 상태 안내 토스트
+    if (copySuccess) {
+      showToast('📋 서식 복사 완료 & 에디터 이동!', '사파리에서 [데스크탑 웹사이트 요청] 후 [붙여넣기]하세요.');
+    } else if (!rawMarkdown) {
+      showToast('🚀 글쓰기 창으로 이동합니다.', '본문이 비어 있어 서식 복사 없이 이동합니다.');
+    }
   }
 
   document.getElementById('openAdminWriteBtn').addEventListener('click', launchTistoryEditor);
@@ -692,12 +724,8 @@
   // ----------------------------------------------------
   // 4. 클립보드 서식 복사 엔진
   // ----------------------------------------------------
-  async function copyRichTextToClipboard() {
-    const rawMarkdown = mdInput.value;
-    if (!rawMarkdown.trim()) {
-      showToast('⚠️ 마크다운 내용을 먼저 입력해주세요.', '');
-      return;
-    }
+  function executeRichCopy(rawMarkdown) {
+    if (!rawMarkdown || !rawMarkdown.trim()) return false;
 
     const inlinedHtml = generateInlinedHtml(rawMarkdown);
 
@@ -722,24 +750,7 @@
       console.warn('copyHandler 실패:', e);
     }
 
-    // 방법 2: Navigator Clipboard API (최신 표준 ClipboardItem)
-    if (!success && navigator.clipboard && window.ClipboardItem) {
-      try {
-        const blobHtml = new Blob([inlinedHtml], { type: 'text/html' });
-        const blobText = new Blob([plainText], { type: 'text/plain' });
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'text/html': blobHtml,
-            'text/plain': blobText
-          })
-        ]);
-        success = true;
-      } catch (err) {
-        console.warn('ClipboardItem API 실패:', err);
-      }
-    }
-
-    // 방법 3: Selection Range Copy
+    // 방법 2: Selection Range Copy (모바일 Safari/Webview Fallback)
     if (!success) {
       try {
         const container = document.getElementById('clipboardContainer');
@@ -765,6 +776,34 @@
       }
     }
 
+    // 방법 3: Navigator Clipboard API (최신 표준 ClipboardItem)
+    if (!success && navigator.clipboard && window.ClipboardItem) {
+      try {
+        const blobHtml = new Blob([inlinedHtml], { type: 'text/html' });
+        const blobText = new Blob([plainText], { type: 'text/plain' });
+        navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': blobHtml,
+            'text/plain': blobText
+          })
+        ]);
+        success = true;
+      } catch (err) {
+        console.warn('ClipboardItem API 실패:', err);
+      }
+    }
+
+    return success;
+  }
+
+  function copyRichTextToClipboard() {
+    const rawMarkdown = mdInput.value;
+    if (!rawMarkdown.trim()) {
+      showToast('⚠️ 마크다운 내용을 먼저 입력해주세요.', '');
+      return;
+    }
+
+    const success = executeRichCopy(rawMarkdown);
     if (success) {
       showToast('📋 서식 복사 완료!', '관리자 글쓰기 에디터에서 [붙여넣기]하세요.');
     } else {
